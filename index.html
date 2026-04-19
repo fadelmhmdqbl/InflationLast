@@ -48,13 +48,7 @@ body { background:var(--bg); color:var(--txt-1); font-family:'DM Sans',sans-seri
   position:sticky; top:0; z-index:100;
 }
 .hdr-l { display:flex; align-items:center; gap:16px; padding:12px 0; }
-.bi-mark {
-  width:36px; height:36px; border-radius:6px;
-  background:linear-gradient(135deg,#1a3a5c,#2a5a8c);
-  display:flex; align-items:center; justify-content:center;
-  font-family:'IBM Plex Mono',monospace; font-size:9px; color:#fff; font-weight:600; letter-spacing:1px;
-  flex-shrink:0;
-}
+
 .hdr-titles { display:flex; flex-direction:column; gap:1px; }
 .hdr-main { font-size:14px; font-weight:700; color:var(--txt-1); letter-spacing:-0.2px; }
 .hdr-sub { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--txt-3); letter-spacing:1.5px; text-transform:uppercase; }
@@ -67,19 +61,8 @@ body { background:var(--bg); color:var(--txt-1); font-family:'DM Sans',sans-seri
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(0.85)} }
 
 /* AI BTN */
-.ai-btn {
-  font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:1px;
-  padding:7px 14px; border-radius:6px; cursor:pointer;
-  border:1.5px solid var(--accent); color:var(--accent);
-  background:transparent; transition:all 0.2s;
-  display:flex; align-items:center; gap:6px; font-weight:500;
-}
-.ai-btn:hover { background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(26,58,92,0.25); }
-.ai-btn:disabled { opacity:0.45; cursor:not-allowed; }
-.spin { animation:spin 1s linear infinite; display:none; }
-.ai-btn.loading .spin { display:inline; }
-.ai-btn.loading .stxt { display:none; }
-@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+ to{transform:rotate(360deg)} }
 
 /* ─── TAB NAV ─── */
 .tab-nav {
@@ -124,11 +107,6 @@ body { background:var(--bg); color:var(--txt-1); font-family:'DM Sans',sans-seri
 .c-red { color:var(--red); } .c-grn { color:var(--grn); } .c-amb { color:var(--amb); } .c-cyn { color:var(--cyn); } .c-pur { color:var(--pur); }
 
 /* ─── AI PANEL ─── */
-.ai-panel { background:var(--grn-bg); border:1px solid var(--grn-b); border-left:3px solid var(--grn); margin:12px 20px; padding:10px 14px; border-radius:6px; display:none; }
-.ai-panel.show { display:block; }
-.ai-panel-title { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--grn); letter-spacing:2px; margin-bottom:6px; font-weight:600; }
-.ai-content { font-size:10px; color:var(--txt-2); line-height:1.7; }
-.ai-content strong { color:var(--grn); }
 
 /* ─── PAGE WRAPPERS ─── */
 .page { display:none; }
@@ -235,41 +213,28 @@ canvas { width:100%!important; }
 .parr { font-size:14px; color:var(--border2); flex-shrink:0; padding:0 1px; }
 
 /* ─── LOADING ─── */
-.loading-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(244,245,247,0.88); z-index:9999; display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; backdrop-filter:blur(4px); }
-.loading-overlay.show { display:flex; }
-.load-txt { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--accent); letter-spacing:2px; }
-.load-bar { width:220px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
-.load-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--amb)); animation:ldprog 1.8s ease-in-out infinite; }
-@keyframes ldprog { 0%{width:0%} 100%{width:100%} }
+
+ 100%{width:100%} }
 </style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loadOverlay">
-  <div class="load-txt" id="loadTxt">QUERYING LATEST DATA...</div>
   <div class="load-bar"><div class="load-fill"></div></div>
 </div>
 
 <!-- ══ HEADER ══ -->
 <div class="hdr">
   <div class="hdr-l">
-    <div class="bi-mark">BI<br>RM</div>
-    <div class="hdr-divider"></div>
     <div class="hdr-titles">
       <div class="hdr-main">US Inflation &amp; Expectations Monitor</div>
-      <div class="hdr-sub">Bank Indonesia · Reserve Management · USD &amp; Gold Asset Desk</div>
+      <div class="hdr-sub">Bank Indonesia · Reserve Management · USD &amp; Gold Asset Desk · As of 19 Apr 2026</div>
     </div>
   </div>
   <div class="hdr-r">
     <div class="ts-wrap">
       <div class="ts-utc" id="ts">—</div>
       <div class="ts-label">REAL-TIME UTC</div>
-    </div>
-    <button class="ai-btn" id="aiBtn" onclick="runAIUpdate()">
-      <span class="stxt">⟳ AI UPDATE</span>
-      <span class="spin">↻</span><span class="spin"> UPDATING…</span>
-    </button>
-    <div class="live-dot"></div>
+    </div> <div class="live-dot"></div>
   </div>
 </div>
 
@@ -280,8 +245,6 @@ canvas { width:100%!important; }
 </div>
 
 <!-- ══ AI PANEL ══ -->
-<div class="ai-panel" id="aiPanel">
-  <div class="ai-panel-title">⚡ AI MARKET UPDATE — LIVE</div>
   <div class="ai-content" id="aiContent"></div>
 </div>
 
@@ -452,13 +415,13 @@ canvas { width:100%!important; }
     </div>
     <div class="card">
       <div class="card-hd">
-        <div class="card-title" style="--ac:var(--grn)">RM View — Real Yield × Gold (XAU/USD)</div>
+        <div class="card-title" style="--ac:var(--grn)">RM View — Real Yield × Gold (XAU/USD)</div><span style="font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#5e35b1;background:rgba(94,53,177,0.08);padding:2px 8px;border-radius:10px;border:1px solid rgba(94,53,177,0.25)">$4,832 ▲41.7% YoY</span>
       </div>
       <div class="card-body">
         <canvas id="gldC" height="148"></canvas>
         <div class="sbox" style="--sc:var(--grn);--sb:var(--grn-bg);margin-top:8px;font-size:8.5px">
-          <strong>GOLD ✓ OVERWEIGHT:</strong> Real 10Y at 1.88% and declining. Gold $4,832/oz (+41.7% YoY, 52W: $3,121–$5,595). Iran war ATH at $5,595. Real yield 1.88% — inverse relationship intact. Ceasefire eased gold from ATH; geopolitical floor at ~$4,500. Iran war geopolitical premium adds tactical layer.<br>
-          <strong>USD:</strong> Nominal 10Y 4.26%, 2Y 3.71%. Only 1 cut priced (Dec-26). Short duration; reassess on Fed pivot signal.
+          <strong>GOLD ✓ $4,832/oz (+41.7% YoY):</strong> ATH $5,595 hit Jan-26; corrected to $4,090 mid-Mar-26 on Iran uncertainty; now recovering on ceasefire. Real 10Y at 1.88% — inverse relationship intact. Continuing to support gold as real yields compress pre-Fed pivot. Iran geopolitical premium embedded.<br>
+          <strong>USD:</strong> 10Y 4.26%, 2Y 3.71% (+55bp slope). 1 cut priced (Dec-26). Accumulate gold on real-yield spikes; extend USD duration only on confirmed pivot.
         </div>
       </div>
     </div>
@@ -695,6 +658,7 @@ canvas { width:100%!important; }
           <tr><td class="nm">Nonferrous Metals</td><td class="vup">+36.7%</td><td style="color:var(--txt-3)">—</td><td class="vup">High</td><td class="vup">Tariff-driven</td></tr>
           <tr><td class="nm">Beef &amp; Veal</td><td class="vup">+19.7%</td><td style="color:var(--txt-3)">—</td><td class="vup">High</td><td class="vam">Food CPI risk</td></tr>
           <tr><td class="nm">Coffee (raw)</td><td class="vup">+20.2%</td><td style="color:var(--txt-3)">—</td><td class="vup">High</td><td class="vam">Pass-through</td></tr>
+          <tr><td class="nm">Gold XAU/USD</td><td class="vpu">$4,832/oz</td><td style="color:var(--txt-3)">$4,090</td><td class="vpu">+18.4%</td><td class="vpu">↑ Inflation hedge</td></tr>
         </table>
         <div class="sbox" style="--sc:var(--amb);--sb:var(--amb-bg);margin-top:8px">
           <strong>RM IMPLICATION:</strong> Energy-driven upstream not yet embedded in core. If ceasefire holds and energy normalizes → pipeline risk fades, Dec-26 core CPI ~2.6%. Escalation scenario → Q3 core CPI toward 2.9%, gold supportive, cautious USD duration extension.
@@ -754,10 +718,9 @@ const DR=[2.21,2.10,2.04,2.08,2.05,2.08,2.05,1.88];
 const DB=[2.51,2.47,2.52,2.50,2.47,2.52,2.72,2.38];
 const DN=[4.72,4.57,4.56,4.58,4.52,4.60,4.77,4.26];
 
-// GOLD DATA UPDATED APR 19 2026 — XAU/USD $4,832 current (Apr 17 close $4,867; 52W range $3,121–$5,595; +41.7% YoY)
-const GDAT=[{x:2.21,y:3100,t:'Mar-25'},{x:2.12,y:3280,t:'Jun-25'},{x:2.08,y:3480,t:'Sep-25'},
-            {x:2.08,y:3780,t:'Dec-25'},{x:2.05,y:4180,t:'Jan-26'},{x:2.08,y:4490,t:'Feb-26'},
-            {x:1.88,y:5595,t:'Mar-26 ATH'},{x:1.88,y:4832,t:'Apr-19 Current ●'}];
+const GDAT=[{x:2.21,y:3120,t:'Mar-25'},{x:2.08,y:3300,t:'May-25'},{x:2.04,y:3500,t:'Jul-25'},
+            {x:2.08,y:3800,t:'Sep-25'},{x:2.08,y:4550,t:'Dec-25'},{x:2.05,y:5200,t:'Jan-26 (Near ATH)'},
+            {x:2.08,y:4300,t:'Feb-26 (Correction)'},{x:2.05,y:4090,t:'Mid-Mar-26'},{x:1.88,y:4832,t:'Apr 19, 2026 ◆ CURRENT'}];
 
 const PPIYOY=[2.1,2.4,2.7,2.4,1.8,1.8,2.4,3.0,3.3,3.7,3.2,2.7,2.5,2.4,2.7,2.6,2.5,2.6,2.5,3.0,3.3,3.5,3.4,4.0];
 const PPICORE=[2.0,2.2,2.5,2.3,1.9,2.0,2.4,2.8,3.0,3.3,2.9,2.5,2.3,2.2,2.5,2.4,2.3,2.8,2.8,3.2,3.5,3.8,3.8,3.6];
@@ -966,51 +929,238 @@ function switchBEI(m){
   }beiCh.update();
 }
 
-/* ── AI UPDATE ── */
-async function runAIUpdate(){
-  const btn=document.getElementById('aiBtn');
-  const overlay=document.getElementById('loadOverlay');
-  const loadTxt=document.getElementById('loadTxt');
-  const panel=document.getElementById('aiPanel');
-  const content=document.getElementById('aiContent');
-  const isP2=document.getElementById('p2').classList.contains('active');
 
-  btn.disabled=true;btn.classList.add('loading');overlay.classList.add('show');
-  const msgs=isP2
-    ?['QUERYING PPI RELEASE DATA...','FETCHING IMPORT/EXPORT PRICES...','ANALYZING PIPELINE PRESSURES...','COMPUTING RM IMPLICATIONS...']
-    :['QUERYING INFLATION DATA...','FETCHING BREAKEVEN & TIPS YIELDS...','ANALYZING MARKET SIGNALS...','COMPILING RM VIEW...'];
-  let i=0;const mi=setInterval(()=>{loadTxt.textContent=msgs[Math.min(i++,msgs.length-1)];},1400);
+/* ═══════════════════════════════════════════════════
+   FRED API — AUTO LIVE DATA LOADER
+   Gets a free key at: fred.stlouisfed.org/docs/api/api_key.html
+   API key configured ✓
+═══════════════════════════════════════════════════ */
+const FRED_KEY = '2ad16998d09efdfbdbfccabc8b37fd74'; // ← paste your free key here
 
-  const system=isP2
-    ?`You are a senior US macro analyst for Bank Indonesia's reserve management desk. 
-Focus on SUPPLY-SIDE: PPI (final demand, goods, services, core), import/export prices, ECI, tariff pressures, Iran war energy impact, pipeline passthrough risk to CPI. 
-Specific numbers. Clean HTML with <strong>. No bullet lists. Max 220 words.`
-    :`You are a senior US macro analyst for Bank Indonesia's reserve management desk.
-Focus on DEMAND-SIDE: latest CPI (headline/core), breakeven inflation, TIPS real yields, 5Y5Y forward, Fed signals, Iran war context.
-Specific numbers. Clean HTML with <strong>. No bullet lists. Max 200 words.`;
+// FRED series IDs mapped to indicators
+const FRED_SERIES = {
+  CPI_HEADLINE: 'CPIAUCSL',      // CPI All Items (level, monthly)
+  CPI_CORE:     'CPILFESL',      // CPI ex Food & Energy (level, monthly)
+  BEI_5Y:       'T5YIE',         // 5Y Breakeven Inflation Rate (daily)
+  BEI_10Y:      'T10YIE',        // 10Y Breakeven Inflation Rate (daily)
+  FWD_5Y5Y:     'T5YIFR',        // 5Y5Y Forward Inflation Expectation (daily)
+  TIPS_10Y:     'DFII10',        // 10Y TIPS Real Yield (daily)
+  TIPS_5Y:      'DFII5',         // 5Y TIPS Real Yield (daily)
+  TIPS_2Y:      'DFII2',         // 2Y TIPS Real Yield (daily)
+  NOM_10Y:      'DGS10',         // 10Y Treasury Nominal (daily)
+  NOM_2Y:       'DGS2',          // 2Y Treasury Nominal (daily)
+  PPI_FINAL:    'PPIFIS',        // PPI Final Demand (monthly)
+  IMPORT_PX:    'IR',            // Import Price Index (monthly)
+  EXPORT_PX:    'IQ',            // Export Price Index (monthly)
+  GOLD:         'GOLDAMGBD228NLBM', // Gold Price USD/oz (daily)
+};
 
-  const prompt=isP2
-    ?`Today is ${new Date().toDateString()}. Search for latest US PPI, import/export prices, employment cost index, and supply-chain pressures. Reserve management implications for USD bonds and gold.`
-    :`Today is ${new Date().toDateString()}. Search for latest US CPI, breakeven inflation rates, TIPS real yields, Fed policy signals. Reserve management implications for USD bonds and gold.`;
+// Map series to KPI element IDs and chart datasets
+const KPI_MAP = {
+  BEI_5Y:   { el: null, kpiIdx: 2, decimals: 2 },
+  BEI_10Y:  { el: null, kpiIdx: 3, decimals: 2 },
+  FWD_5Y5Y: { el: null, kpiIdx: 4, decimals: 2 },
+  TIPS_10Y: { el: null, kpiIdx: 5, decimals: 2 },
+};
 
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        system, messages:[{role:'user',content:prompt}]})});
-    const data=await res.json();
-    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    clearInterval(mi);overlay.classList.remove('show');btn.disabled=false;btn.classList.remove('loading');
-    panel.classList.add('show');
-    content.innerHTML=`<em style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#8a9bac">Updated: ${new Date().toUTCString()}</em><br><br>${text||'<em>No new data changes vs displayed.</em>'}`;
-    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }catch(err){
-    clearInterval(mi);overlay.classList.remove('show');btn.disabled=false;btn.classList.remove('loading');
-    panel.classList.add('show');
-    content.innerHTML=`<strong style="color:var(--red)">Error:</strong> ${err.message}`;
+async function fetchFRED(seriesId, limit=25, frequency='', units='') {
+  const base = 'https://api.stlouisfed.org/fred/series/observations';
+  const params = new URLSearchParams({
+    series_id: seriesId,
+    api_key: FRED_KEY,
+    file_type: 'json',
+    sort_order: 'desc',
+    limit: String(limit),
+    ...(frequency && { frequency }),
+    ...(units && { units }),
+  });
+  const res = await fetch(`${base}?${params}`);
+  if (!res.ok) throw new Error(`FRED ${seriesId}: ${res.status}`);
+  const data = await res.json();
+  // Filter out missing values (.) and return newest-first
+  return data.observations
+    .filter(o => o.value !== '.')
+    .map(o => ({ date: o.date, value: parseFloat(o.value) }));
+}
+
+function pct_change_yoy(obs) {
+  // obs is sorted newest-first; calculate YoY % change
+  // obs[0] = latest, obs[12] = 12 months ago
+  if (obs.length < 13) return null;
+  return ((obs[0].value / obs[12].value) - 1) * 100;
+}
+
+function setKPI(kpiIndex, value, suffix='%', decimals=2) {
+  // KPI cells are 0-indexed in order of appearance
+  const cells = document.querySelectorAll('.kpi-cell, .kc');
+  if (!cells[kpiIndex]) return;
+  const valEl = cells[kpiIndex].querySelector('.kpi-val, .kv');
+  if (valEl) valEl.textContent = value.toFixed(decimals) + suffix;
+}
+
+function setKPISubtext(kpiIndex, text) {
+  const cells = document.querySelectorAll('.kpi-cell, .kc');
+  if (!cells[kpiIndex]) return;
+  const chg = cells[kpiIndex].querySelector('.kpi-chg, .kg');
+  if (chg) chg.textContent = text;
+  const dt = cells[kpiIndex].querySelector('.kpi-date, .kd');
+  if (dt) dt.textContent = 'Live · FRED · ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function updateLiveStatus(msg, isError=false) {
+  let bar = document.getElementById('liveStatusBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'liveStatusBar';
+    bar.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:8px;padding:5px 16px;border-bottom:1px solid #e2e6eb;display:flex;align-items:center;gap:8px;';
+    const nav = document.querySelector('.tab-nav, .nav');
+    if (nav) nav.after(bar);
+  }
+  bar.innerHTML = isError
+    ? `<span style="color:#c62828">⚠ FRED API: ${msg}</span> — <span style="color:#8097ae">Using static data. Get a free key at <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" style="color:#005ea0">fred.stlouisfed.org</a> and paste it in the HTML.</span>`
+    : `<span style="width:7px;height:7px;border-radius:50%;background:#00704a;display:inline-block;box-shadow:0 0 0 2px rgba(0,112,74,0.2)"></span><span style="color:#00704a;font-weight:600">LIVE DATA</span><span style="color:#8097ae"> — ${msg}</span>`;
+}
+
+async function loadLiveData() {
+  if (FRED_KEY === 'PLACEHOLDER_NOT_SET') {
+    updateLiveStatus('No API key set', true);
+    return;
+  }
+  updateLiveStatus('Fetching from FRED…');
+  try {
+    // Fetch all series in parallel
+    const [
+      cpiRaw, coreRaw,
+      bei5y, bei10y, fwd5y5y,
+      tips2y, tips5y, tips10y,
+      nom2y, nom10y,
+      gold
+    ] = await Promise.all([
+      fetchFRED('CPIAUCSL', 14, 'm'),
+      fetchFRED('CPILFESL', 14, 'm'),
+      fetchFRED('T5YIE',   3,  'd'),
+      fetchFRED('T10YIE',  3,  'd'),
+      fetchFRED('T5YIFR',  3,  'd'),
+      fetchFRED('DFII2',   3,  'd'),
+      fetchFRED('DFII5',   3,  'd'),
+      fetchFRED('DFII10',  3,  'd'),
+      fetchFRED('DGS2',    3,  'd'),
+      fetchFRED('DGS10',   3,  'd'),
+      fetchFRED('GOLDAMGBD228NLBM', 3, 'd'),
+    ]);
+
+    // ── CPI KPIs ──
+    const cpiYoY  = pct_change_yoy(cpiRaw);
+    const coreYoY = pct_change_yoy(coreRaw);
+    if (cpiYoY)  setKPI(0, cpiYoY,  '%', 1);
+    if (coreYoY) setKPI(1, coreYoY, '%', 1);
+    const latestCPIDate = cpiRaw[0]?.date ? new Date(cpiRaw[0].date).toLocaleDateString('en-US',{month:'short',year:'numeric'}) : '';
+    if (cpiYoY && latestCPIDate) {
+      setKPISubtext(0, (cpiYoY >= 0 ? '▲' : '▼') + ' ' + latestCPIDate + ' · BLS');
+      setKPISubtext(1, (coreYoY >= 0 ? '▲' : '▼') + ' ' + latestCPIDate + ' · BLS');
+    }
+
+    // ── Market KPIs ──
+    if (bei5y[0])   setKPI(2, bei5y[0].value,   '%', 2);
+    if (bei10y[0])  setKPI(3, bei10y[0].value,   '%', 2);
+    if (fwd5y5y[0]) setKPI(4, fwd5y5y[0].value,  '%', 2);
+    if (tips10y[0]) setKPI(5, tips10y[0].value,   '%', 2);
+    const mktDate = bei5y[0]?.date ? new Date(bei5y[0].date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    if (mktDate) {
+      setKPISubtext(2, 'Live · FRED · ' + mktDate);
+      setKPISubtext(3, 'Live · FRED · ' + mktDate);
+      setKPISubtext(4, 'Live · FRED · ' + mktDate);
+      setKPISubtext(5, 'Live · FRED · ' + mktDate);
+    }
+
+    // ── UPDATE CHARTS with live historical data ──
+    // Build 24-month arrays for CPI chart
+    const cpiHist = cpiRaw.slice(0,14).reverse(); // oldest first
+    const coreHist = coreRaw.slice(0,14).reverse();
+    const cpiLabels = cpiHist.map(o => {
+      const d = new Date(o.date); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+    });
+    // Calculate YoY for each point
+    const h2y_live = [], c2y_live = [];
+    for (let i = 0; i < cpiHist.length - 12; i++) {
+      const j = i + 12;
+      h2y_live.push(((cpiHist[j].value / cpiHist[i].value) - 1) * 100);
+      c2y_live.push(((coreHist[j].value / coreHist[i].value) - 1) * 100);
+    }
+
+    // Update CPI chart if we have data
+    if (typeof cpiCh !== 'undefined' && h2y_live.length > 0) {
+      cpiCh.data.labels = cpiLabels.slice(12);
+      cpiCh.data.datasets[0].data = h2y_live;
+      cpiCh.data.datasets[1].data = c2y_live;
+      cpiCh.data.datasets[2].data = Array(h2y_live.length).fill(2);
+      cpiCh.update();
+    }
+
+    // Update BEI chart data (last known point) — update latest entry
+    if (typeof beiCh !== 'undefined' && bei5y[0]) {
+      const lastIdx = beiCh.data.datasets[1].data.length - 1;
+      beiCh.data.datasets[0].data[lastIdx] = bei5y[0].value;
+      beiCh.data.datasets[2].data[lastIdx] = bei10y[0]?.value || beiCh.data.datasets[2].data[lastIdx];
+      beiCh.update();
+    }
+
+    // Update realC (TIPS chart) last point
+    if (tips10y[0] && tips5y[0] && tips2y[0]) {
+      const rChart = Chart.getChart('realC');
+      if (rChart) {
+        const li = rChart.data.datasets[0].data.length - 1;
+        rChart.data.datasets[0].data[li] = tips2y[0].value;
+        rChart.data.datasets[1].data[li] = tips5y[0].value;
+        rChart.data.datasets[2].data[li] = tips10y[0].value;
+        rChart.update();
+      }
+    }
+
+    // ── Gold latest ──
+    if (gold[0]) {
+      const goldVal = gold[0].value;
+      // Find gold value elements in the RM card
+      document.querySelectorAll('.kv, .kpi-val').forEach(el => {
+        if (el.textContent.includes('4,832') || el.textContent.includes('$4,')) {
+          el.textContent = '$' + goldVal.toLocaleString('en-US', {maximumFractionDigits:0});
+        }
+      });
+      // Update gold scatter chart last point
+      if (typeof GDAT !== 'undefined') {
+        GDAT[GDAT.length-1].y = goldVal;
+        GDAT[GDAT.length-1].t = 'Live · ' + new Date(gold[0].date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        const gChart = Chart.getChart('gldC');
+        if (gChart) gChart.update();
+      }
+    }
+
+    const updTime = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
+    updateLiveStatus(`All indicators updated · ${updTime} · Data: FRED/BLS/Treasury`);
+
+  } catch(err) {
+    updateLiveStatus(err.message, true);
+    console.warn('FRED fetch error:', err);
   }
 }
+
+// Auto-load on page open
+window.addEventListener('load', () => setTimeout(loadLiveData, 800));
+
+// Manual refresh button — adds a subtle refresh link
+window.addEventListener('load', () => {
+  const bar = document.querySelector('.hdr-r, .hdr-r');
+  if (bar) {
+    const btn = document.createElement('button');
+    btn.textContent = '↻ REFRESH DATA';
+    btn.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:7px;letter-spacing:1px;padding:5px 10px;border-radius:4px;cursor:pointer;border:1px solid #cdd3db;color:#3d5166;background:transparent;transition:all .2s;';
+    btn.onmouseover = () => { btn.style.borderColor='#1a3a5c'; btn.style.color='#1a3a5c'; };
+    btn.onmouseout  = () => { btn.style.borderColor='#cdd3db'; btn.style.color='#3d5166'; };
+    btn.onclick = loadLiveData;
+    bar.insertBefore(btn, bar.firstChild);
+  }
+});
+
 </script>
 </body>
 </html>
