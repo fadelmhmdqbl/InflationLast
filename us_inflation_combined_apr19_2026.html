@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>US Inflation Monitor — Bank Indonesia Reserve Management</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:        #f4f5f7;
+  --surface:   #ffffff;
+  --surface2:  #f9fafb;
+  --border:    #e2e5ea;
+  --border2:   #d0d5dd;
+  --txt-1:     #0f1923;
+  --txt-2:     #445568;
+  --txt-3:     #8a9bac;
+  --accent:    #1a3a5c;
+  --gold:      #c8860a;
+  --red:       #d63031;
+  --red-bg:    #fff5f5;
+  --red-b:     #fcd0d0;
+  --grn:       #00875a;
+  --grn-bg:    #f0faf5;
+  --grn-b:     #b8e8d0;
+  --amb:       #c8860a;
+  --amb-bg:    #fffbf0;
+  --amb-b:     #f7e09a;
+  --cyn:       #0070c0;
+  --cyn-bg:    #f0f7ff;
+  --pur:       #6941c6;
+  --shadow:    0 1px 4px rgba(15,25,35,0.08), 0 0 0 1px rgba(15,25,35,0.05);
+  --shadow-md: 0 4px 16px rgba(15,25,35,0.10), 0 0 0 1px rgba(15,25,35,0.05);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--txt-1); font-family:'DM Sans',sans-serif; font-size:12px; min-height:100vh; }
+
+/* ─── HEADER ─── */
+.hdr {
+  background:var(--surface);
+  border-bottom:2px solid var(--border);
+  padding:0 20px;
+  display:flex; align-items:stretch; justify-content:space-between;
+  box-shadow:0 1px 6px rgba(15,25,35,0.07);
+  position:sticky; top:0; z-index:100;
+}
+.hdr-l { display:flex; align-items:center; gap:16px; padding:12px 0; }
+.bi-mark {
+  width:36px; height:36px; border-radius:6px;
+  background:linear-gradient(135deg,#1a3a5c,#2a5a8c);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:9px; color:#fff; font-weight:600; letter-spacing:1px;
+  flex-shrink:0;
+}
+.hdr-titles { display:flex; flex-direction:column; gap:1px; }
+.hdr-main { font-size:14px; font-weight:700; color:var(--txt-1); letter-spacing:-0.2px; }
+.hdr-sub { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--txt-3); letter-spacing:1.5px; text-transform:uppercase; }
+.hdr-divider { width:1px; background:var(--border); margin:8px 0; }
+.hdr-r { display:flex; align-items:center; gap:10px; }
+.ts-wrap { display:flex; flex-direction:column; align-items:flex-end; gap:1px; }
+.ts-utc { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--txt-3); }
+.ts-label { font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--txt-3); letter-spacing:1px; }
+.live-dot { width:7px; height:7px; border-radius:50%; background:#00875a; box-shadow:0 0 0 2px rgba(0,135,90,0.2); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(0.85)} }
+
+/* AI BTN */
+.ai-btn {
+  font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:1px;
+  padding:7px 14px; border-radius:6px; cursor:pointer;
+  border:1.5px solid var(--accent); color:var(--accent);
+  background:transparent; transition:all 0.2s;
+  display:flex; align-items:center; gap:6px; font-weight:500;
+}
+.ai-btn:hover { background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(26,58,92,0.25); }
+.ai-btn:disabled { opacity:0.45; cursor:not-allowed; }
+.spin { animation:spin 1s linear infinite; display:none; }
+.ai-btn.loading .spin { display:inline; }
+.ai-btn.loading .stxt { display:none; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* ─── TAB NAV ─── */
+.tab-nav {
+  background:var(--surface); border-bottom:2px solid var(--border);
+  display:flex; padding:0 20px; gap:2px;
+}
+.tnav-btn {
+  font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1px;
+  padding:10px 18px; cursor:pointer; border:none; background:transparent;
+  color:var(--txt-3); border-bottom:2px solid transparent; margin-bottom:-2px;
+  transition:all .2s; font-weight:500; text-transform:uppercase;
+}
+.tnav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tnav-btn:hover:not(.active) { color:var(--txt-2); background:var(--surface2); }
+
+/* ─── BANNER ─── */
+.banner {
+  background:linear-gradient(90deg,#fff8f0,#fffaf5);
+  border-bottom:1px solid #f5ddb8;
+  border-left:4px solid var(--amb);
+  padding:7px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.b-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:600; letter-spacing:2px; color:var(--amb); }
+.b-val { font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:600; color:var(--red); }
+.b-txt { font-size:10px; color:var(--txt-2); }
+
+/* ─── KPI BAR ─── */
+.kpi-bar {
+  display:grid; grid-template-columns:repeat(6,1fr);
+  border-bottom:2px solid var(--border);
+  background:var(--surface);
+}
+.kpi-cell {
+  padding:10px 14px; border-right:1px solid var(--border); position:relative; overflow:hidden;
+}
+.kpi-cell:last-child { border-right:none; }
+.kpi-lbl { font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--txt-3); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px; }
+.kpi-val { font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:600; line-height:1; color:var(--txt-1); }
+.kpi-chg { font-size:9px; margin-top:3px; font-weight:500; }
+.kpi-date { font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--txt-3); margin-top:2px; }
+.kpi-bar-line { position:absolute; bottom:0; left:0; height:3px; }
+.c-red { color:var(--red); } .c-grn { color:var(--grn); } .c-amb { color:var(--amb); } .c-cyn { color:var(--cyn); } .c-pur { color:var(--pur); }
+
+/* ─── AI PANEL ─── */
+.ai-panel { background:var(--grn-bg); border:1px solid var(--grn-b); border-left:3px solid var(--grn); margin:12px 20px; padding:10px 14px; border-radius:6px; display:none; }
+.ai-panel.show { display:block; }
+.ai-panel-title { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--grn); letter-spacing:2px; margin-bottom:6px; font-weight:600; }
+.ai-content { font-size:10px; color:var(--txt-2); line-height:1.7; }
+.ai-content strong { color:var(--grn); }
+
+/* ─── PAGE WRAPPERS ─── */
+.page { display:none; }
+.page.active { display:block; }
+
+/* ─── GRIDS ─── */
+.g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:12px 20px; }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 20px; }
+.g2-1 { display:grid; grid-template-columns:2fr 1fr; gap:12px; padding:0 20px; }
+.g1 { padding:0 20px; }
+.mt4 { margin-top:12px; }
+.pb { padding-bottom:16px; }
+
+/* ─── PANEL CARD ─── */
+.card {
+  background:var(--surface); border-radius:8px;
+  box-shadow:var(--shadow); overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.card-hd {
+  padding:10px 14px 0; display:flex; align-items:center; justify-content:space-between;
+}
+.card-title {
+  display:flex; align-items:center; gap:7px;
+  font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--txt-3); font-weight:500;
+}
+.card-title::before {
+  content:''; width:3px; height:12px; border-radius:2px;
+  background:var(--ac,var(--accent)); display:block; flex-shrink:0;
+}
+.card-badge {
+  font-family:'IBM Plex Mono',monospace; font-size:7px; padding:2px 7px;
+  border-radius:10px; font-weight:600; letter-spacing:0.5px;
+}
+.card-body { padding:10px 14px 14px; flex:1; }
+.tabs-sm { display:flex; gap:2px; }
+.tab-sm {
+  font-family:'IBM Plex Mono',monospace; font-size:7px; padding:3px 8px;
+  cursor:pointer; border:1px solid var(--border2); color:var(--txt-3);
+  background:transparent; border-radius:4px; letter-spacing:1px; transition:all .15s;
+}
+.tab-sm.on, .tab-sm:hover { color:var(--accent); border-color:var(--accent); background:#eef4ff; }
+
+canvas { width:100%!important; }
+
+/* ─── SIGNAL BOX ─── */
+.sbox {
+  margin-top:8px; padding:7px 10px; border-radius:5px;
+  border-left:3px solid var(--sc,var(--amb));
+  background:var(--sb,var(--amb-bg));
+  font-size:9px; color:var(--txt-2); line-height:1.65;
+}
+.sbox strong { color:var(--sc,var(--amb)); }
+
+/* ─── PILLS ─── */
+.pill {
+  display:inline-block; font-family:'IBM Plex Mono',monospace;
+  font-size:7px; letter-spacing:1px; padding:2px 7px;
+  border-radius:10px; margin-right:3px; font-weight:600;
+}
+.p-hot { background:var(--red-bg); color:var(--red); border:1px solid var(--red-b); }
+.p-ok  { background:var(--grn-bg); color:var(--grn); border:1px solid var(--grn-b); }
+.p-amb { background:var(--amb-bg); color:var(--amb); border:1px solid var(--amb-b); }
+.p-cyn { background:var(--cyn-bg); color:var(--cyn); border:1px solid #b8d8f8; }
+
+/* ─── TABLE ─── */
+.mt { width:100%; border-collapse:collapse; }
+.mt th {
+  font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:1px;
+  color:var(--txt-3); padding:5px 7px; text-align:left;
+  border-bottom:1.5px solid var(--border); text-transform:uppercase; font-weight:500;
+}
+.mt td { font-size:10px; padding:5px 7px; border-bottom:1px solid var(--border); color:var(--txt-2); }
+.mt tr:last-child td { border-bottom:none; }
+.mt tr:hover td { background:var(--surface2); }
+.nm { color:var(--txt-1); font-weight:500; font-size:10px; }
+.vup { color:var(--red); font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.vdn { color:var(--grn); font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.vam { color:var(--amb); font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.vcy { color:var(--cyn); font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.vpu { color:var(--pur); font-family:'IBM Plex Mono',monospace; font-weight:600; }
+
+/* ─── SECTION HEADER ─── */
+.sec-hd {
+  padding:12px 20px 4px;
+  font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:2px;
+  text-transform:uppercase; color:var(--txt-3); font-weight:500;
+  border-top:1px solid var(--border); margin-top:4px;
+  display:flex; align-items:center; gap:8px;
+}
+.sec-hd::before { content:''; width:20px; height:1.5px; background:var(--border2); }
+
+/* ─── PIPELINE ─── */
+.pipeline { display:flex; align-items:center; gap:0; margin:8px 0; }
+.pbox {
+  flex:1; text-align:center; padding:8px 4px;
+  border:1px solid var(--border); border-radius:4px;
+  background:var(--surface2); margin:0 2px;
+}
+.pbox .pl { font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--txt-3); letter-spacing:1px; }
+.pbox .pv { font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600; margin-top:2px; }
+.pbox .pc { font-size:8px; margin-top:1px; font-weight:500; }
+.parr { font-size:14px; color:var(--border2); flex-shrink:0; padding:0 1px; }
+
+/* ─── LOADING ─── */
+.loading-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(244,245,247,0.88); z-index:9999; display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; backdrop-filter:blur(4px); }
+.loading-overlay.show { display:flex; }
+.load-txt { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--accent); letter-spacing:2px; }
+.load-bar { width:220px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+.load-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--amb)); animation:ldprog 1.8s ease-in-out infinite; }
+@keyframes ldprog { 0%{width:0%} 100%{width:100%} }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadOverlay">
+  <div class="load-txt" id="loadTxt">QUERYING LATEST DATA...</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="bi-mark">BI<br>RM</div>
+    <div class="hdr-divider"></div>
+    <div class="hdr-titles">
+      <div class="hdr-main">US Inflation &amp; Expectations Monitor</div>
+      <div class="hdr-sub">Bank Indonesia · Reserve Management · USD &amp; Gold Asset Desk</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="ts-wrap">
+      <div class="ts-utc" id="ts">—</div>
+      <div class="ts-label">REAL-TIME UTC</div>
+    </div>
+    <button class="ai-btn" id="aiBtn" onclick="runAIUpdate()">
+      <span class="stxt">⟳ AI UPDATE</span>
+      <span class="spin">↻</span><span class="spin"> UPDATING…</span>
+    </button>
+    <div class="live-dot"></div>
+  </div>
+</div>
+
+<!-- ══ TAB NAV ══ -->
+<div class="tab-nav">
+  <button class="tnav-btn active" onclick="switchPage('p1',this)">① Demand · CPI · Expectations</button>
+  <button class="tnav-btn" onclick="switchPage('p2',this)">② Production · PPI · Labor</button>
+</div>
+
+<!-- ══ AI PANEL ══ -->
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-panel-title">⚡ AI MARKET UPDATE — LIVE</div>
+  <div class="ai-content" id="aiContent"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PAGE 1 — DEMAND / CPI / EXPECTATIONS
+═════════════════════════════════════════════ -->
+<div class="page active" id="p1">
+
+  <!-- BANNER -->
+  <div class="banner">
+    <span class="b-tag">⚠ GEO-RISK</span>
+    <span class="b-txt">Iran War (Feb 28) energy shock drove Mar-26 CPI to</span>
+    <span class="b-val">3.3% YoY</span>
+    <span class="b-txt">· Gasoline +21.2% MoM (record since 1967) · US-Iran 2-week ceasefire active · Apr CPI est. ~3.6% · Next release:</span>
+    <span class="b-val">May 12, 2026</span>
+  </div>
+
+  <!-- KPI BAR -->
+  <div class="kpi-bar">
+    <div class="kpi-cell">
+      <div class="kpi-lbl">Headline CPI YoY</div>
+      <div class="kpi-val c-red">3.3%</div>
+      <div class="kpi-chg c-red">▲ +0.9pp vs Feb · Iran shock</div>
+      <div class="kpi-date">Mar-26 · BLS Apr 10, 2026</div>
+      <div class="kpi-bar-line" style="width:83%;background:var(--red);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">Core CPI YoY</div>
+      <div class="kpi-val c-amb">2.6%</div>
+      <div class="kpi-chg c-grn">▲ +0.1pp · below 2.7% fcst</div>
+      <div class="kpi-date">Mar-26 · Energy-ex contained</div>
+      <div class="kpi-bar-line" style="width:65%;background:var(--amb);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">5Y Breakeven BEI</div>
+      <div class="kpi-val c-amb">2.58%</div>
+      <div class="kpi-chg c-grn">▼ from 2.82% Iran peak</div>
+      <div class="kpi-date">Apr 10, 2026</div>
+      <div class="kpi-bar-line" style="width:64%;background:var(--amb);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">10Y Breakeven BEI</div>
+      <div class="kpi-val c-amb">2.38%</div>
+      <div class="kpi-chg c-grn">▼ post-ceasefire easing</div>
+      <div class="kpi-date">Apr 17, 2026 (est.)</div>
+      <div class="kpi-bar-line" style="width:59%;background:var(--amb);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">5Y5Y Forward</div>
+      <div class="kpi-val c-cyn">2.40%</div>
+      <div class="kpi-chg c-grn">Anchored near pre-war level</div>
+      <div class="kpi-date">Apr 17, 2026 (est.)</div>
+      <div class="kpi-bar-line" style="width:60%;background:var(--cyn);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">10Y Real Yield (TIPS)</div>
+      <div class="kpi-val c-grn">1.88%</div>
+      <div class="kpi-chg c-grn">▼ 0.33pp YoY · Fed H.15</div>
+      <div class="kpi-date">Apr 17, 2026</div>
+      <div class="kpi-bar-line" style="width:47%;background:var(--grn);opacity:.25"></div>
+    </div>
+  </div>
+
+  <div class="sec-hd">CPI Trend &amp; Market Expectations</div>
+
+  <!-- ROW 1 -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--red)">CPI Headline vs Core vs Fed Target</div>
+        <div class="tabs-sm">
+          <div class="tab-sm on" id="p1tc2" onclick="switchCPI('2y')">2Y</div>
+          <div class="tab-sm" id="p1tc5" onclick="switchCPI('5y')">5Y</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <canvas id="cpiC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--red);--sb:var(--red-bg)">
+          <strong>MAR-26 SHOCK:</strong> <span class="pill p-hot">ENERGY-DRIVEN</span>
+          Headline 3.3% (highest since May-24). Core 2.6% — below 2.7% forecast. Gasoline +21.2% MoM drove ~75% of total. Core signal: underlying inflation contained. EY outlook: 3.6% Apr–May, Dec-26 at 3.0%.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--amb)">Breakeven Inflation — BEI Term Structure</div>
+        <div class="tabs-sm">
+          <div class="tab-sm on" id="p1tbh" onclick="switchBEI('hist')">HIST</div>
+          <div class="tab-sm" id="p1tbc" onclick="switchBEI('curve')">CURVE</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <canvas id="beiC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--amb);--sb:var(--amb-bg)">
+          <strong>SIGNAL:</strong> <span class="pill p-amb">PARTIALLY ANCHORED</span>
+          5Y BEI spiked to 2.82% at Iran peak, retraced to 2.58%. 5Y5Y fwd ~2.40% — long-run expectations still anchored. Risk: prolonged conflict or new escalation could push 5Y5Y above 2.7%.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-hd mt4">Real Yields &amp; Yield Decomposition</div>
+
+  <!-- ROW 2 -->
+  <div class="g2 mt4">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--grn)">TIPS Real Yields — 2Y / 5Y / 10Y</div>
+      </div>
+      <div class="card-body">
+        <canvas id="realC" height="165"></canvas>
+        <div class="sbox" style="--sc:var(--grn);--sb:var(--grn-bg)">
+          <strong>SHIFT:</strong> <span class="pill p-cyn">EASING REAL RATES</span>
+          10Y TIPS at 1.88% (Apr 17) — down 0.33pp YoY from 2.21% peak. Flight-to-quality + growth concerns compressing real yields before Fed cut. Favorable for <strong>gold allocation</strong> — inverse real-yield relationship intact.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--cyn)">10Y Decomposition — Real + BEI = Nominal</div>
+      </div>
+      <div class="card-body">
+        <canvas id="dcC" height="165"></canvas>
+        <div class="sbox" style="--sc:var(--cyn);--sb:var(--cyn-bg)">
+          <strong>APR-26:</strong> <span class="pill p-amb">TERM PREMIUM NORMALIZING</span>
+          Nominal 10Y at 4.26% = Real (1.88%) + BEI (2.38%). 2Y at 3.71%, positive 2s10s slope (55bp) restored. USD duration: moving toward neutral — consider extending as real yields decline toward 1.5%.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-hd mt4">CPI Components &amp; Expectations Matrix</div>
+
+  <!-- ROW 3 -->
+  <div class="g3 mt4 pb">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--red)">CPI Components — Mar 2026 (YoY %)</div>
+      </div>
+      <div class="card-body">
+        <canvas id="compC" height="148"></canvas>
+        <table class="mt" style="margin-top:8px">
+          <tr><th>Component</th><th>YoY</th><th>MoM</th><th>View</th></tr>
+          <tr><td class="nm">Gasoline</td><td class="vup">+18.9%</td><td class="vup">+21.2%</td><td class="vup">Iran shock</td></tr>
+          <tr><td class="nm">Airfares</td><td class="vup">+14.9%</td><td class="vup">High</td><td class="vup">Fuel surcharge</td></tr>
+          <tr><td class="nm">Shelter / OER</td><td class="vam">+3.0%</td><td class="vam">+0.3%</td><td class="vam">Stabilizing</td></tr>
+          <tr><td class="nm">Food Away Home</td><td class="vam">+3.8%</td><td class="vam">+0.2%</td><td class="vam">Persistent</td></tr>
+          <tr><td class="nm">Food at Home</td><td class="vam">+1.9%</td><td class="vdn">-0.2%</td><td class="vdn">Cooling</td></tr>
+          <tr><td class="nm">Used Vehicles</td><td class="vdn">-3.2%</td><td class="vdn">-0.4%</td><td class="vdn">Deflationary</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--amb)">Inflation Expectations Matrix</div>
+      </div>
+      <div class="card-body">
+        <canvas id="termC" height="148"></canvas>
+        <table class="mt" style="margin-top:8px">
+          <tr><th>Tenor</th><th>BEI</th><th>Real</th><th>Nominal</th><th>Δ 1M</th></tr>
+          <tr><td class="nm">2Y</td><td class="vam">2.30%</td><td class="vam">1.41%</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:600">3.71%</td><td class="vdn">▼0.40</td></tr>
+          <tr><td class="nm">5Y</td><td class="vam">2.58%</td><td class="vam">1.75%</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:600">4.33%</td><td class="vdn">▼0.20</td></tr>
+          <tr><td class="nm">10Y</td><td class="vam">2.38%</td><td class="vam">1.88%</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:600">4.26%</td><td class="vdn">▼0.22</td></tr>
+          <tr><td class="nm">30Y</td><td class="vam">2.28%</td><td class="vam">2.60%</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:600">4.88%</td><td class="vdn">▼0.10</td></tr>
+          <tr><td class="nm">5Y5Y Fwd</td><td class="vam">2.40%</td><td style="color:var(--txt-3)">—</td><td style="color:var(--txt-3)">—</td><td class="vdn">▼0.04</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--grn)">RM View — Real Yield × Gold (XAU/USD)</div>
+      </div>
+      <div class="card-body">
+        <canvas id="gldC" height="148"></canvas>
+        <div class="sbox" style="--sc:var(--grn);--sb:var(--grn-bg);margin-top:8px;font-size:8.5px">
+          <strong>GOLD ✓ OVERWEIGHT:</strong> Real 10Y at 1.88% and declining. Gold $4,832/oz (+41.7% YoY, 52W: $3,121–$5,595). Iran war ATH at $5,595. Real yield 1.88% — inverse relationship intact. Ceasefire eased gold from ATH; geopolitical floor at ~$4,500. Iran war geopolitical premium adds tactical layer.<br>
+          <strong>USD:</strong> Nominal 10Y 4.26%, 2Y 3.71%. Only 1 cut priced (Dec-26). Short duration; reassess on Fed pivot signal.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /PAGE 1 -->
+
+<!-- ════════════════════════════════════════════
+     PAGE 2 — PRODUCTION / PPI / LABOR
+═════════════════════════════════════════════ -->
+<div class="page" id="p2">
+
+  <!-- BANNER -->
+  <div class="banner" style="background:linear-gradient(90deg,#fff8f0,#fffaf5);border-color:#f5c08a;border-left-color:var(--red)">
+    <span class="b-tag" style="color:var(--red)">⚠ PIPELINE RISK</span>
+    <span class="b-txt">PPI Final Demand</span><span class="b-val"> 4.0% YoY</span>
+    <span class="b-txt">· Goods</span><span class="b-val"> 4.9%</span>
+    <span class="b-txt">· Stage 1 Intermediate</span><span class="b-val"> +6.2%</span>
+    <span class="b-txt">· Export Prices</span><span class="b-val"> +5.6%</span>
+    <span class="b-txt">— Iran energy shock + tariff passthrough accelerating upstream pipeline. Next PPI:</span>
+    <span class="b-val">May 13, 2026</span>
+  </div>
+
+  <!-- KPI BAR -->
+  <div class="kpi-bar">
+    <div class="kpi-cell">
+      <div class="kpi-lbl">PPI Final Demand YoY</div>
+      <div class="kpi-val c-red">4.0%</div>
+      <div class="kpi-chg c-red">▲ +0.6pp vs Feb · Highest Feb-23</div>
+      <div class="kpi-date">Mar-26 · BLS Apr 14, 2026</div>
+      <div class="kpi-bar-line" style="width:65%;background:var(--red);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">PPI Goods YoY</div>
+      <div class="kpi-val c-red">4.9%</div>
+      <div class="kpi-chg c-red">▲ from 2.5% Feb · Energy shock</div>
+      <div class="kpi-date">Mar-26 · Final demand goods</div>
+      <div class="kpi-bar-line" style="width:72%;background:var(--red);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">PPI Core (ex-F/E/Trade)</div>
+      <div class="kpi-val c-amb">3.6%</div>
+      <div class="kpi-chg c-grn">MoM +0.2% · below 0.5% fcst</div>
+      <div class="kpi-date">Mar-26 · Underlying contained</div>
+      <div class="kpi-bar-line" style="width:55%;background:var(--amb);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">Import Prices YoY</div>
+      <div class="kpi-val c-amb">2.1%</div>
+      <div class="kpi-chg c-red">▲ from 1.0% Feb · Nonfuel +2.8%</div>
+      <div class="kpi-date">Mar-26 · BLS Apr 15, 2026</div>
+      <div class="kpi-bar-line" style="width:40%;background:var(--cyn);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">Export Prices YoY</div>
+      <div class="kpi-val c-red">5.6%</div>
+      <div class="kpi-chg c-red">▲ from 3.8% Feb · Highest Nov-22</div>
+      <div class="kpi-date">Mar-26 · BLS Apr 15, 2026</div>
+      <div class="kpi-bar-line" style="width:72%;background:var(--pur);opacity:.25"></div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-lbl">ECI YoY (Q4-25)</div>
+      <div class="kpi-val c-grn">3.4%</div>
+      <div class="kpi-chg c-grn">▼ from 3.5% Q3 · QoQ +0.7%</div>
+      <div class="kpi-date">Q4-2025 · Released Feb 10, 2026</div>
+      <div class="kpi-bar-line" style="width:52%;background:var(--grn);opacity:.25"></div>
+    </div>
+  </div>
+
+  <div class="sec-hd">PPI Rate Trends — Final Demand · Services vs Goods · MoM</div>
+
+  <!-- P2 ROW 1 -->
+  <div class="g3">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--red)">PPI Final Demand YoY — FDIUFDYO</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--txt-3)">T=<span style="color:var(--red);font-weight:600">4.00</span> +0.60</div>
+      </div>
+      <div class="card-body">
+        <canvas id="ppiYoYC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--red);--sb:var(--red-bg)">
+          <strong>MAR-26:</strong> <span class="pill p-hot">ACCELERATING</span>
+          4.0% YoY — highest since Feb-23. Goods +4.9% (energy), Services +3.8% (stable). Core PPI +3.6% — below 3.8% forecast. No broad passthrough embedded yet. Watch Apr–Jun window.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--amb)">PPI Services vs Goods YoY — FDIUSGYO</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--txt-3)">Svc=<span style="color:var(--amb);font-weight:600">3.80</span> Gds=<span style="color:var(--red);font-weight:600">4.90</span></div>
+      </div>
+      <div class="card-body">
+        <canvas id="ppiSGC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--amb);--sb:var(--amb-bg)">
+          <strong>SPLIT:</strong> <span class="pill p-amb">GOODS DOMINANT</span>
+          Goods surged to 4.9% from 2.5% Feb — energy amplification. Services flat MoM despite transport +1.3%. <strong>Tariff risk:</strong> Nonferrous metals +36.7% YoY; unprocessed metals +75%. Goods pressure building into Apr.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--cyn)">PPI Final Demand MoM — FDIDFDMO</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--txt-3)">T=<span style="color:var(--grn);font-weight:600">+0.50</span> vs fcst 1.10</div>
+      </div>
+      <div class="card-body">
+        <canvas id="ppiMoMC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--grn);--sb:var(--grn-bg)">
+          <strong>MoM:</strong> <span class="pill p-ok">BELOW CONSENSUS</span>
+          +0.5% MoM vs 1.1% forecast — market relief. Goods +1.6% MoM; Services 0.0%. Core MoM +0.2% (fcst 0.5%). Energy spike mechanical, not embedded. Signal: no broad second-round effects yet.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-hd mt4">PPI Index Levels · Import &amp; Export Prices</div>
+
+  <!-- P2 ROW 2 -->
+  <div class="g3 mt4">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--cyn)">PPI Index Levels (Nov-09=100) — FDIDFDB</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--txt-3)">FD=<span style="color:var(--cyn);font-weight:600">154.01</span></div>
+      </div>
+      <div class="card-body">
+        <canvas id="ppiIdxC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--cyn);--sb:var(--cyn-bg)">
+          <strong>LEVEL:</strong> <span class="pill p-amb">NEW CYCLE HIGH</span>
+          PPI FD index 154.01 — new 4-year high driven by energy. Goods 152.42, Services 153.66. Momentum accelerating; goods index closing gap on services level. Watch Apr index vs 2022 peak trajectory.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--cyn)">Import Prices YoY — IMP1YOY%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--txt-3)">T=<span style="color:var(--amb);font-weight:600">2.10</span> +0.80 +61.5%</div>
+      </div>
+      <div class="card-body">
+        <canvas id="impC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--cyn);--sb:var(--cyn-bg)">
+          <strong>MAR-26:</strong> <span class="pill p-amb">BUILDING PRESSURE</span>
+          Import prices +2.1% YoY (highest since Dec-24). Nonfuel imports +2.8% YoY — largest since Oct-22. Petroleum +9.4% MoM but -4.2% YoY (base). Capital goods + consumer goods rising. <strong>BI:</strong> Imported inflation = IDR/USD pressure monitor.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--pur)">Export Prices YoY — EXP1CYOY%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--txt-3)">T=<span style="color:var(--pur);font-weight:600">5.60</span> +2.10 +60.0%</div>
+      </div>
+      <div class="card-body">
+        <canvas id="expC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--pur);--sb:#faf5ff">
+          <strong>MAR-26:</strong> <span class="pill p-hot">SHARPLY RISING</span>
+          Export prices +5.6% YoY — highest since Nov-22. Non-ag exports +5.8% (energy, metals, industrial supplies). Agricultural exports +3.4%. Rising export pricing = improving US terms of trade. <strong>Gold:</strong> Commodity export strength supports inflation hedge narrative.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-hd mt4">Labor Costs &amp; Inflation Pipeline</div>
+
+  <!-- P2 ROW 3 -->
+  <div class="g3 mt4 pb">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--grn)">Employment Cost Index YoY — ECI YOY</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--txt-3)">T=<span style="color:var(--grn);font-weight:600">3.40</span> Q4-25</div>
+      </div>
+      <div class="card-body">
+        <canvas id="eciC" height="175"></canvas>
+        <div class="sbox" style="--sc:var(--grn);--sb:var(--grn-bg)">
+          <strong>Q4-25:</strong> <span class="pill p-ok">GRADUALLY COOLING</span>
+          ECI 3.4% YoY (from 3.5% Q3). QoQ +0.7% — softest since Q2-21. Wages +0.7%, Benefits +0.7%. Fed view: 3.4% ECI consistent with 2% inflation if productivity ~1.4%. <strong>No wage-price spiral risk at current trajectory.</strong>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--amb)">PPI Inflation Pipeline — Stage 1 → CPI</div>
+      </div>
+      <div class="card-body">
+        <div class="pipeline">
+          <div class="pbox" style="border-color:#fcd0d0">
+            <div class="pl">STAGE 1<br>INTERMED</div>
+            <div class="pv" style="color:var(--red)">6.2%</div>
+            <div class="pc" style="color:var(--red)">▲ Early</div>
+          </div>
+          <div class="parr">→</div>
+          <div class="pbox" style="border-color:#fde8c0">
+            <div class="pl">STAGE 2<br>INTERMED</div>
+            <div class="pv" style="color:var(--amb)">4.3%</div>
+            <div class="pc" style="color:var(--amb)">▲ Mid</div>
+          </div>
+          <div class="parr">→</div>
+          <div class="pbox" style="border-color:var(--amb-b)">
+            <div class="pl">FINAL<br>DEMAND</div>
+            <div class="pv" style="color:var(--amb)">4.0%</div>
+            <div class="pc" style="color:var(--amb)">PPI</div>
+          </div>
+          <div class="parr">→</div>
+          <div class="pbox" style="border-color:#b8d8f8">
+            <div class="pl">IMPORT<br>PRICES</div>
+            <div class="pv" style="color:var(--cyn)">2.1%</div>
+            <div class="pc" style="color:var(--cyn)">+2.8%</div>
+          </div>
+          <div class="parr">→</div>
+          <div class="pbox" style="border-color:var(--grn-b)">
+            <div class="pl">CORE<br>CPI</div>
+            <div class="pv" style="color:var(--grn)">2.6%</div>
+            <div class="pc" style="color:var(--grn)">← Lag</div>
+          </div>
+        </div>
+        <canvas id="pipeC" height="135"></canvas>
+        <div class="sbox" style="--sc:var(--amb);--sb:var(--amb-bg);margin-top:6px">
+          <strong>PIPELINE GAP:</strong> Stage 1 (6.2%) → Core CPI (2.6%) = 3.6pp gap. Historically 3–6 month lag to CPI. Watch May–Aug-26 core readings. If ceasefire holds and energy normalizes, gap closes benignly. If conflict re-escalates → full passthrough risk by Q3-26.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" style="--ac:var(--amb)">Production-Side Passthrough Summary</div>
+      </div>
+      <div class="card-body">
+        <table class="mt">
+          <tr><th>Indicator</th><th>Latest</th><th>Prev</th><th>Δ</th><th>CPI Risk</th></tr>
+          <tr><td class="nm">PPI Final Demand</td><td class="vup">4.0%</td><td style="color:var(--txt-3)">3.4%</td><td class="vup">+0.6</td><td class="vup">3–6M lag</td></tr>
+          <tr><td class="nm">PPI Goods YoY</td><td class="vup">4.9%</td><td style="color:var(--txt-3)">2.5%</td><td class="vup">+2.4</td><td class="vup">High</td></tr>
+          <tr><td class="nm">PPI Services YoY</td><td class="vam">3.8%</td><td style="color:var(--txt-3)">3.5%</td><td class="vam">+0.3</td><td class="vam">Moderate</td></tr>
+          <tr><td class="nm">PPI Core (ex-F/E/T)</td><td class="vam">3.6%</td><td style="color:var(--txt-3)">3.8%</td><td class="vdn">-0.2</td><td class="vam">Contained</td></tr>
+          <tr><td class="nm">Stage 1 Interm.</td><td class="vup">6.2%</td><td style="color:var(--txt-3)">5.5%</td><td class="vup">+0.7</td><td class="vup">Future risk</td></tr>
+          <tr><td class="nm">Import Prices</td><td class="vam">2.1%</td><td style="color:var(--txt-3)">1.0%</td><td class="vup">+1.1</td><td class="vam">2–4M lag</td></tr>
+          <tr><td class="nm">Export Prices</td><td class="vup">5.6%</td><td style="color:var(--txt-3)">3.8%</td><td class="vup">+1.8</td><td class="vpu">Terms↑</td></tr>
+          <tr><td class="nm">ECI (Labor)</td><td class="vdn">3.4%</td><td style="color:var(--txt-3)">3.5%</td><td class="vdn">-0.1</td><td class="vdn">Contained</td></tr>
+          <tr><td class="nm">Nonferrous Metals</td><td class="vup">+36.7%</td><td style="color:var(--txt-3)">—</td><td class="vup">High</td><td class="vup">Tariff-driven</td></tr>
+          <tr><td class="nm">Beef &amp; Veal</td><td class="vup">+19.7%</td><td style="color:var(--txt-3)">—</td><td class="vup">High</td><td class="vam">Food CPI risk</td></tr>
+          <tr><td class="nm">Coffee (raw)</td><td class="vup">+20.2%</td><td style="color:var(--txt-3)">—</td><td class="vup">High</td><td class="vam">Pass-through</td></tr>
+        </table>
+        <div class="sbox" style="--sc:var(--amb);--sb:var(--amb-bg);margin-top:8px">
+          <strong>RM IMPLICATION:</strong> Energy-driven upstream not yet embedded in core. If ceasefire holds and energy normalizes → pipeline risk fades, Dec-26 core CPI ~2.6%. Escalation scenario → Q3 core CPI toward 2.9%, gold supportive, cautious USD duration extension.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /PAGE 2 -->
+
+<script>
+/* ── TIMESTAMP ── */
+const tsEl=document.getElementById('ts');
+function tick(){tsEl.textContent=new Date().toUTCString().replace('GMT','UTC');}
+tick();setInterval(tick,1000);
+
+/* ── CHART DEFAULTS ── */
+Chart.defaults.color='#8a9bac';
+Chart.defaults.borderColor='#e2e5ea';
+Chart.defaults.font.family="'IBM Plex Mono',monospace";
+Chart.defaults.font.size=8;
+
+/* ── PAGE SWITCH ── */
+function switchPage(id, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ── COLOUR HELPERS ── */
+const R='#d63031', G='#00875a', A='#c8860a', C='#0070c0', P='#6941c6';
+const RA='rgba(214,48,49,', GA='rgba(0,135,90,', AA='rgba(200,134,10,', CA='rgba(0,112,192,';
+
+/* ── DATA ── */
+const M24=['Apr-24','May-24','Jun-24','Jul-24','Aug-24','Sep-24','Oct-24','Nov-24','Dec-24',
+           'Jan-25','Feb-25','Mar-25','Apr-25','May-25','Jun-25','Jul-25','Aug-25','Sep-25',
+           'Oct-25','Nov-25','Dec-25','Jan-26','Feb-26','Mar-26'];
+const H2Y=[3.4,3.3,3.0,2.9,2.5,2.4,2.6,2.7,2.9,3.0,2.8,2.4,2.3,2.4,2.6,2.5,2.4,2.4,2.3,2.5,2.7,2.4,2.4,3.3];
+const C2Y=[3.6,3.4,3.3,3.2,3.2,3.3,3.3,3.3,3.2,3.3,3.1,2.8,2.8,2.8,2.7,2.7,2.6,2.6,2.5,2.5,2.5,2.5,2.5,2.6];
+const M5Y=['Jan-20','Jul-20','Jan-21','Apr-21','Jul-21','Jan-22','Apr-22','Jul-22','Jan-23','Jul-23','Jan-24','Jul-24','Jan-25','Jul-25','Jan-26','Mar-26'];
+const H5Y=[2.5,1.0,1.4,4.2,5.4,7.5,8.3,8.5,6.4,3.2,3.1,2.9,3.0,2.5,2.4,3.3];
+const C5Y=[2.3,1.6,1.4,3.0,4.5,6.0,6.2,5.9,5.6,4.7,3.9,3.2,3.3,2.7,2.5,2.6];
+
+const BL=['Mar-25','May-25','Jul-25','Sep-25','Nov-25','Jan-26','Feb-26','Mar-26 Peak','Apr-26'];
+const B2=[2.48,2.42,2.44,2.48,2.44,2.40,2.48,2.68,2.30];
+const B5=[2.62,2.55,2.58,2.60,2.56,2.55,2.60,2.82,2.58];
+const B10=[2.51,2.46,2.48,2.52,2.48,2.47,2.52,2.72,2.38];
+
+const RL=['Mar-25','May-25','Jul-25','Sep-25','Nov-25','Jan-26','Feb-26','Mar-26','Apr-26'];
+const R2=[1.98,1.88,1.82,1.76,1.72,1.65,1.58,1.50,1.41];
+const R5=[2.06,1.98,1.94,1.88,1.84,1.80,1.78,1.78,1.75];
+const R10=[2.21,2.12,2.08,2.04,2.08,2.05,2.08,2.05,1.88];
+
+const DL=['Mar-25','Jun-25','Sep-25','Dec-25','Jan-26','Feb-26','Mar-26','Apr-26'];
+const DR=[2.21,2.10,2.04,2.08,2.05,2.08,2.05,1.88];
+const DB=[2.51,2.47,2.52,2.50,2.47,2.52,2.72,2.38];
+const DN=[4.72,4.57,4.56,4.58,4.52,4.60,4.77,4.26];
+
+// GOLD DATA UPDATED APR 19 2026 — XAU/USD $4,832 current (Apr 17 close $4,867; 52W range $3,121–$5,595; +41.7% YoY)
+const GDAT=[{x:2.21,y:3100,t:'Mar-25'},{x:2.12,y:3280,t:'Jun-25'},{x:2.08,y:3480,t:'Sep-25'},
+            {x:2.08,y:3780,t:'Dec-25'},{x:2.05,y:4180,t:'Jan-26'},{x:2.08,y:4490,t:'Feb-26'},
+            {x:1.88,y:5595,t:'Mar-26 ATH'},{x:1.88,y:4832,t:'Apr-19 Current ●'}];
+
+const PPIYOY=[2.1,2.4,2.7,2.4,1.8,1.8,2.4,3.0,3.3,3.7,3.2,2.7,2.5,2.4,2.7,2.6,2.5,2.6,2.5,3.0,3.3,3.5,3.4,4.0];
+const PPICORE=[2.0,2.2,2.5,2.3,1.9,2.0,2.4,2.8,3.0,3.3,2.9,2.5,2.3,2.2,2.5,2.4,2.3,2.8,2.8,3.2,3.5,3.8,3.8,3.6];
+const PPISVC=[2.5,2.7,3.0,2.8,2.5,2.5,3.1,3.3,3.5,3.8,2.8,2.5,2.3,2.4,2.8,2.7,2.5,2.9,2.9,3.2,3.5,3.5,3.5,3.8];
+const PPIGDS=[1.5,1.8,2.3,1.8,0.8,0.5,1.2,2.4,2.8,3.2,4.0,3.3,3.0,2.3,2.5,2.4,2.4,2.0,2.0,2.6,3.0,3.5,2.5,4.9];
+const PPIMOM=[0.2,0.3,0.4,0.1,-0.1,0.0,0.3,0.5,0.4,0.5,0.1,-0.1,0.0,0.1,0.3,0.1,0.1,0.2,0.2,0.4,0.4,0.6,0.7,0.5];
+const PPIFD=[140.8,141.2,141.8,141.6,141.1,141.2,141.8,142.6,143.2,144.0,143.5,143.1,143.1,143.2,143.7,143.8,144.0,144.4,144.7,145.6,146.3,148.0,153.22,154.01];
+const PPIG=[139.5,140.0,140.8,140.5,139.8,139.8,140.5,141.5,142.0,142.8,143.0,142.6,142.5,142.5,142.9,143.0,143.2,143.5,143.8,144.6,145.2,147.5,151.5,152.42];
+const PPIS=[141.2,141.6,142.2,142.0,141.5,141.8,142.4,143.2,143.8,144.6,144.0,143.6,143.5,143.6,144.1,144.2,144.4,144.8,145.1,146.0,146.8,148.4,153.0,153.66];
+
+const TL=['Jan-22','Apr-22','Jul-22','Oct-22','Jan-23','Apr-23','Jul-23','Oct-23','Jan-24','Apr-24','Jul-24','Oct-24','Jan-25','Apr-25','Jul-25','Oct-25','Jan-26','Feb-26','Mar-26'];
+const IMP=[11.0,14.5,9.8,5.2,1.2,-4.0,-4.5,-1.5,0.0,0.5,0.2,0.5,0.3,0.3,0.5,0.8,0.3,1.0,2.1];
+const EXP=[16.5,19.2,14.8,8.5,3.5,-4.5,-5.5,-1.8,0.5,0.8,1.0,1.5,2.0,2.5,3.0,2.5,3.0,3.8,5.6];
+
+const EQ=['Q1-21','Q2-21','Q3-21','Q4-21','Q1-22','Q2-22','Q3-22','Q4-22','Q1-23','Q2-23','Q3-23','Q4-23','Q1-24','Q2-24','Q3-24','Q4-24','Q1-25','Q2-25','Q3-25','Q4-25'];
+const ECIY=[3.0,3.3,3.6,4.4,5.0,5.1,4.7,4.6,4.8,4.6,4.3,4.2,4.2,4.1,3.9,3.7,3.7,3.6,3.5,3.4];
+
+const PIPL=['Sep-24','Nov-24','Jan-25','Mar-25','May-25','Jul-25','Sep-25','Nov-25','Jan-26','Feb-26','Mar-26'];
+const PS1=[3.2,4.5,5.2,4.0,3.8,3.5,3.8,4.5,5.5,5.5,6.2];
+const PS2=[2.5,3.2,3.8,2.8,2.6,2.4,2.8,3.5,4.0,4.0,4.3];
+const PFD=[1.8,3.0,3.7,2.7,2.4,2.6,2.6,3.0,3.5,3.4,4.0];
+const PCC=[3.3,3.3,3.3,2.8,2.8,2.7,2.6,2.5,2.5,2.5,2.6];
+
+/* ── CHART FACTORY ── */
+const CO=(yl,mn,mx)=>({
+  responsive:true,animation:{duration:450},
+  plugins:{
+    legend:{display:true,position:'top',labels:{boxWidth:8,padding:12,font:{size:8},color:'#445568',usePointStyle:true,pointStyleWidth:8}},
+    tooltip:{mode:'index',intersect:false,backgroundColor:'#fff',borderColor:'#d0d5dd',borderWidth:1,
+      titleColor:'#0f1923',bodyColor:'#445568',padding:10,cornerRadius:5,
+      callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}},
+  scales:{
+    x:{grid:{color:'#f0f2f5'},ticks:{maxRotation:35,maxTicksLimit:8,font:{size:7},color:'#8a9bac'}},
+    y:{grid:{color:'#f0f2f5'},min:mn,max:mx,
+      ticks:{callback:v=>v.toFixed(1)+'%',font:{size:7},color:'#8a9bac'},
+      title:{display:!!yl,text:yl,font:{size:7},color:'#8a9bac'}}},
+  interaction:{mode:'index',intersect:false},
+  elements:{point:{radius:0,hoverRadius:4},line:{tension:0.35}}
+});
+
+/* ── BUILD CHARTS ── */
+
+// CPI
+const cpiCtx=document.getElementById('cpiC').getContext('2d');
+let cpiCh=new Chart(cpiCtx,{type:'line',data:{labels:M24,datasets:[
+  {label:'Headline CPI',data:H2Y,borderColor:R,backgroundColor:RA+'0.06)',borderWidth:2,fill:true},
+  {label:'Core CPI',data:C2Y,borderColor:A,backgroundColor:AA+'0.04)',borderWidth:2,fill:true,borderDash:[5,3]},
+  {label:'Fed 2% Target',data:Array(M24.length).fill(2),borderColor:G,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false}
+]},options:CO('YoY %',0,4.5)});
+
+// BEI
+const beiCtx=document.getElementById('beiC').getContext('2d');
+let beiCh=new Chart(beiCtx,{type:'line',data:{labels:BL,datasets:[
+  {label:'2Y BEI',data:B2,borderColor:'#b05c00',borderWidth:2,fill:false,pointRadius:3},
+  {label:'5Y BEI',data:B5,borderColor:A,borderWidth:2.5,fill:false,pointRadius:3},
+  {label:'10Y BEI',data:B10,borderColor:'#7a4500',borderWidth:2,fill:false,pointRadius:3},
+  {label:'Fed 2%',data:Array(BL.length).fill(2),borderColor:G,borderWidth:1,borderDash:[6,4],pointRadius:0,fill:false}
+]},options:CO('BEI %',1.8,3.2)});
+
+// Real yields
+new Chart(document.getElementById('realC').getContext('2d'),{type:'line',data:{labels:RL,datasets:[
+  {label:'2Y Real',data:R2,borderColor:G,borderWidth:2,fill:false,pointRadius:3},
+  {label:'5Y Real',data:R5,borderColor:'#007a50',borderWidth:2,fill:false,borderDash:[4,2],pointRadius:3},
+  {label:'10Y Real',data:R10,borderColor:'#005535',borderWidth:2,fill:false,pointRadius:3}
+]},options:CO('Real Yield %',1.0,2.5)});
+
+// Decomposition
+new Chart(document.getElementById('dcC').getContext('2d'),{type:'bar',data:{labels:DL,datasets:[
+  {label:'Real Yield',data:DR,backgroundColor:GA+'0.5)',borderColor:G,borderWidth:1,stack:'s',borderRadius:2},
+  {label:'Breakeven',data:DB,backgroundColor:AA+'0.5)',borderColor:A,borderWidth:1,stack:'s',borderRadius:2},
+  {label:'10Y Nominal',data:DN,type:'line',borderColor:C,borderWidth:2,backgroundColor:'transparent',
+   pointRadius:4,pointBackgroundColor:C,fill:false,tension:0.3,order:0}
+]},options:{responsive:true,animation:{duration:450},
+  plugins:{legend:{display:true,position:'top',labels:{boxWidth:8,padding:10,font:{size:8},color:'#445568',usePointStyle:true}},
+    tooltip:{backgroundColor:'#fff',borderColor:'#d0d5dd',borderWidth:1,titleColor:'#0f1923',bodyColor:'#445568',padding:10}},
+  scales:{x:{stacked:true,grid:{color:'#f0f2f5'},ticks:{font:{size:7},color:'#8a9bac'}},
+    y:{stacked:true,grid:{color:'#f0f2f5'},min:0,max:5.5,ticks:{callback:v=>v.toFixed(1)+'%',font:{size:7},color:'#8a9bac'}}}}});
+
+// CPI Components
+new Chart(document.getElementById('compC').getContext('2d'),{type:'bar',data:{
+  labels:['Gasoline','Airfares','Energy','Shelter','Med Care','Food Away','Food Home','Used Veh'],
+  datasets:[{label:'YoY %',data:[18.9,14.9,12.5,3.0,3.1,3.8,1.9,-3.2],
+    backgroundColor:[RA+'0.7)',RA+'0.6)',RA+'0.55)',AA+'0.55)',AA+'0.50)',AA+'0.45)',GA+'0.45)',GA+'0.6)'],
+    borderColor:[R,R,'#c04020',A,A,'#a06800',G,G],borderWidth:1,borderRadius:2}]},
+  options:{responsive:true,indexAxis:'y',animation:{duration:450},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.x.toFixed(1)+'%'},
+      backgroundColor:'#fff',borderColor:'#d0d5dd',borderWidth:1,titleColor:'#0f1923',bodyColor:'#445568',padding:8}},
+    scales:{x:{grid:{color:'#f0f2f5'},min:-6,max:22,ticks:{callback:v=>v+'%',font:{size:7},color:'#8a9bac'}},
+      y:{grid:{color:'#f0f2f5'},ticks:{font:{size:7},color:'#445568'}}}}});
+
+// Term structure
+new Chart(document.getElementById('termC').getContext('2d'),{type:'bar',data:{
+  labels:['2Y BEI','5Y BEI','10Y BEI','5Y5Y Fwd'],
+  datasets:[
+    {label:'Apr-26',data:[2.30,2.58,2.38,2.40],backgroundColor:[AA+'0.6)',AA+'0.75)',AA+'0.55)',CA+'0.55)'],borderColor:[A,A,'#a06800',C],borderWidth:1,borderRadius:3},
+    {label:'Mar-26 Peak',data:[2.68,2.82,2.72,2.64],backgroundColor:RA+'0.12)',borderColor:R,borderWidth:1,borderRadius:2}
+  ]},options:{responsive:true,animation:{duration:450},
+    plugins:{legend:{display:true,position:'top',labels:{boxWidth:8,font:{size:8},color:'#445568',usePointStyle:true}},
+      tooltip:{callbacks:{label:c=>' '+c.parsed.y.toFixed(2)+'%'},backgroundColor:'#fff',borderColor:'#d0d5dd',borderWidth:1,titleColor:'#0f1923',bodyColor:'#445568',padding:8}},
+    scales:{x:{grid:{color:'#f0f2f5'},ticks:{font:{size:7},color:'#8a9bac'}},
+      y:{grid:{color:'#f0f2f5'},min:2.0,max:3.0,ticks:{callback:v=>v.toFixed(1)+'%',font:{size:7},color:'#8a9bac'}}}}});
+
+// Gold scatter
+new Chart(document.getElementById('gldC').getContext('2d'),{type:'scatter',data:{datasets:[{
+  label:'10Y Real Yield × XAU/USD',data:GDAT,
+  backgroundColor:GDAT.map((_,i)=>AA+(0.2+i*0.1)+')'),
+  borderColor:A,pointRadius:7,pointHoverRadius:9}]},
+  options:{responsive:true,animation:{duration:450},
+    plugins:{legend:{display:true,labels:{boxWidth:8,font:{size:8},color:'#445568',usePointStyle:true}},
+      tooltip:{backgroundColor:'#fff',borderColor:'#d0d5dd',borderWidth:1,titleColor:'#0f1923',bodyColor:'#445568',padding:10,
+        callbacks:{title:i=>GDAT[i[0].dataIndex].t,label:c=>[` Real 10Y: ${c.parsed.x.toFixed(2)}%`,` Gold: $${c.parsed.y.toLocaleString()}/oz`]}}},
+    scales:{x:{grid:{color:'#f0f2f5'},title:{display:true,text:'Real 10Y Yield (%)',font:{size:7},color:'#8a9bac'},ticks:{callback:v=>v.toFixed(2)+'%',font:{size:7},color:'#8a9bac'},min:1.7,max:2.4},
+      y:{grid:{color:'#f0f2f5'},title:{display:true,text:'Gold (USD/oz)',font:{size:7},color:'#8a9bac'},ticks:{font:{size:7},color:'#8a9bac'}}}}});
+
+// PPI YoY
+new Chart(document.getElementById('ppiYoYC').getContext('2d'),{type:'line',data:{labels:M24,datasets:[
+  {label:'PPI Final Demand',data:PPIYOY,borderColor:R,backgroundColor:RA+'0.07)',borderWidth:2.5,fill:true},
+  {label:'Core PPI (ex-F/E/T)',data:PPICORE,borderColor:A,backgroundColor:AA+'0.04)',borderWidth:2,fill:true,borderDash:[5,3]},
+  {label:'CPI 2% Target',data:Array(M24.length).fill(2),borderColor:G,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false}
+]},options:CO('YoY %',0,5.5)});
+
+// PPI Services vs Goods
+new Chart(document.getElementById('ppiSGC').getContext('2d'),{type:'line',data:{labels:M24,datasets:[
+  {label:'PPI Services',data:PPISVC,borderColor:A,borderWidth:2.5,fill:false},
+  {label:'PPI Goods',data:PPIGDS,borderColor:R,borderWidth:2,fill:false,borderDash:[4,2]},
+  {label:'Core CPI',data:C2Y,borderColor:G,borderWidth:1.5,fill:false,borderDash:[2,3],pointRadius:0}
+]},options:CO('YoY %',0,6.5)});
+
+// PPI MoM bar
+new Chart(document.getElementById('ppiMoMC').getContext('2d'),{type:'bar',data:{labels:M24,datasets:[{
+  label:'PPI MoM %',data:PPIMOM,
+  backgroundColor:PPIMOM.map(v=>v>=0?RA+'0.65)':GA+'0.6)'),
+  borderColor:PPIMOM.map(v=>v>=0?R:G),
+  borderWidth:1,borderRadius:2}]},
+  options:{responsive:true,animation:{duration:450},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' PPI MoM: '+c.parsed.y.toFixed(2)+'%'},
+      backgroundColor:'#fff',borderColor:'#d0d5dd',borderWidth:1,titleColor:'#0f1923',bodyColor:'#445568',padding:8}},
+    scales:{x:{grid:{color:'#f0f2f5'},ticks:{maxRotation:35,maxTicksLimit:8,font:{size:7},color:'#8a9bac'}},
+      y:{grid:{color:'#f0f2f5'},min:-0.5,max:1.2,ticks:{callback:v=>v.toFixed(1)+'%',font:{size:7},color:'#8a9bac'}}}}});
+
+// PPI Index
+new Chart(document.getElementById('ppiIdxC').getContext('2d'),{type:'line',data:{labels:M24,datasets:[
+  {label:'Final Demand',data:PPIFD,borderColor:C,backgroundColor:CA+'0.06)',borderWidth:2,fill:true},
+  {label:'Goods',data:PPIG,borderColor:R,borderWidth:2,fill:false,borderDash:[4,2]},
+  {label:'Services',data:PPIS,borderColor:P,borderWidth:2,fill:false,borderDash:[2,3]}
+]},options:{...CO('Index (Nov-09=100)',125,158),
+  plugins:{legend:{display:true,position:'top',labels:{boxWidth:8,padding:10,font:{size:8},color:'#445568',usePointStyle:true}},
+    tooltip:{backgroundColor:'#fff',borderColor:'#d0d5dd',borderWidth:1,titleColor:'#0f1923',bodyColor:'#445568',padding:10,
+      callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.y.toFixed(3)}}}}});
+
+// Import prices
+new Chart(document.getElementById('impC').getContext('2d'),{type:'line',data:{labels:TL,datasets:[
+  {label:'Import Prices YoY',data:IMP,borderColor:C,backgroundColor:CA+'0.07)',borderWidth:2.5,fill:true},
+  {label:'2% Ref',data:Array(TL.length).fill(2),borderColor:G,borderWidth:1,borderDash:[6,4],pointRadius:0,fill:false}
+]},options:CO('YoY %',-7,17)});
+
+// Export prices
+new Chart(document.getElementById('expC').getContext('2d'),{type:'line',data:{labels:TL,datasets:[
+  {label:'Export Prices YoY',data:EXP,borderColor:P,backgroundColor:'rgba(105,65,198,0.07)',borderWidth:2.5,fill:true},
+  {label:'2% Ref',data:Array(TL.length).fill(2),borderColor:G,borderWidth:1,borderDash:[6,4],pointRadius:0,fill:false}
+]},options:CO('YoY %',-9,22)});
+
+// ECI
+new Chart(document.getElementById('eciC').getContext('2d'),{type:'line',data:{labels:EQ,datasets:[
+  {label:'ECI YoY',data:ECIY,borderColor:G,backgroundColor:GA+'0.08)',borderWidth:2.5,fill:true,pointRadius:4,pointBackgroundColor:G},
+  {label:'2% Threshold',data:Array(EQ.length).fill(2),borderColor:'#aabbcc',borderWidth:1,borderDash:[6,4],pointRadius:0,fill:false},
+  {label:'3% Threshold',data:Array(EQ.length).fill(3),borderColor:A,borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}
+]},options:{...CO('YoY %',2.5,5.5),elements:{point:{radius:4,hoverRadius:6},line:{tension:0.3}}}});
+
+// Pipeline
+new Chart(document.getElementById('pipeC').getContext('2d'),{type:'line',data:{labels:PIPL,datasets:[
+  {label:'Stage 1 Interm.',data:PS1,borderColor:'#c0040a',borderWidth:2,fill:false,pointRadius:3},
+  {label:'Stage 2 Interm.',data:PS2,borderColor:R,borderWidth:2,fill:false,borderDash:[3,2],pointRadius:3},
+  {label:'PPI Final Demand',data:PFD,borderColor:A,borderWidth:2,fill:false,pointRadius:3},
+  {label:'Core CPI',data:PCC,borderColor:G,borderWidth:2,fill:false,borderDash:[5,3],pointRadius:3}
+]},options:{...CO('YoY %',1.5,7.5),elements:{point:{radius:3,hoverRadius:5},line:{tension:0.3}}}});
+
+/* ── TAB SWITCHES ── */
+function switchCPI(p){
+  ['2y','5y'].forEach(x=>{const el=document.getElementById('p1tc'+x.replace('y',''));if(el)el.classList.remove('on');});
+  const t=document.getElementById('p1tc'+p.replace('y',''));if(t)t.classList.add('on');
+  if(p==='5y'){cpiCh.data.labels=M5Y;cpiCh.data.datasets[0].data=H5Y;cpiCh.data.datasets[1].data=C5Y;
+    cpiCh.data.datasets[2].data=Array(M5Y.length).fill(2);cpiCh.options.scales.y.min=0;cpiCh.options.scales.y.max=9.5;
+  }else{cpiCh.data.labels=M24;cpiCh.data.datasets[0].data=H2Y;cpiCh.data.datasets[1].data=C2Y;
+    cpiCh.data.datasets[2].data=Array(M24.length).fill(2);cpiCh.options.scales.y.min=0;cpiCh.options.scales.y.max=4.5;}
+  cpiCh.update();
+}
+function switchBEI(m){
+  ['hist','curve'].forEach(x=>{const el=document.getElementById('p1tb'+x[0]);if(el)el.classList.remove('on');});
+  const t=document.getElementById('p1tb'+m[0]);if(t)t.classList.add('on');
+  if(m==='curve'){
+    beiCh.data.labels=['2Y','5Y','10Y','5Y5Y Fwd'];
+    beiCh.data.datasets=[
+      {label:'Apr-26 (Post-ceasefire)',data:[2.30,2.58,2.38,2.40],borderColor:G,borderWidth:2.5,fill:false,tension:0.4,pointRadius:5,pointBackgroundColor:G},
+      {label:'Mar-26 (Iran Peak)',data:[2.68,2.82,2.72,2.64],borderColor:R,borderWidth:2,borderDash:[4,3],fill:false,tension:0.4,pointRadius:4},
+      {label:'Pre-War (Feb-26)',data:[2.48,2.60,2.52,2.44],borderColor:'#aabbcc',borderWidth:1.5,borderDash:[2,4],fill:false,tension:0.4,pointRadius:3}
+    ];beiCh.options.scales.y.min=2.0;beiCh.options.scales.y.max=3.1;
+  }else{
+    beiCh.data.labels=BL;
+    beiCh.data.datasets=[
+      {label:'2Y BEI',data:B2,borderColor:'#b05c00',borderWidth:2,fill:false,pointRadius:3},
+      {label:'5Y BEI',data:B5,borderColor:A,borderWidth:2.5,fill:false,pointRadius:3},
+      {label:'10Y BEI',data:B10,borderColor:'#7a4500',borderWidth:2,fill:false,pointRadius:3},
+      {label:'Fed 2%',data:Array(BL.length).fill(2),borderColor:G,borderWidth:1,borderDash:[6,4],pointRadius:0,fill:false}
+    ];beiCh.options.scales.y.min=1.8;beiCh.options.scales.y.max=3.2;
+  }beiCh.update();
+}
+
+/* ── AI UPDATE ── */
+async function runAIUpdate(){
+  const btn=document.getElementById('aiBtn');
+  const overlay=document.getElementById('loadOverlay');
+  const loadTxt=document.getElementById('loadTxt');
+  const panel=document.getElementById('aiPanel');
+  const content=document.getElementById('aiContent');
+  const isP2=document.getElementById('p2').classList.contains('active');
+
+  btn.disabled=true;btn.classList.add('loading');overlay.classList.add('show');
+  const msgs=isP2
+    ?['QUERYING PPI RELEASE DATA...','FETCHING IMPORT/EXPORT PRICES...','ANALYZING PIPELINE PRESSURES...','COMPUTING RM IMPLICATIONS...']
+    :['QUERYING INFLATION DATA...','FETCHING BREAKEVEN & TIPS YIELDS...','ANALYZING MARKET SIGNALS...','COMPILING RM VIEW...'];
+  let i=0;const mi=setInterval(()=>{loadTxt.textContent=msgs[Math.min(i++,msgs.length-1)];},1400);
+
+  const system=isP2
+    ?`You are a senior US macro analyst for Bank Indonesia's reserve management desk. 
+Focus on SUPPLY-SIDE: PPI (final demand, goods, services, core), import/export prices, ECI, tariff pressures, Iran war energy impact, pipeline passthrough risk to CPI. 
+Specific numbers. Clean HTML with <strong>. No bullet lists. Max 220 words.`
+    :`You are a senior US macro analyst for Bank Indonesia's reserve management desk.
+Focus on DEMAND-SIDE: latest CPI (headline/core), breakeven inflation, TIPS real yields, 5Y5Y forward, Fed signals, Iran war context.
+Specific numbers. Clean HTML with <strong>. No bullet lists. Max 200 words.`;
+
+  const prompt=isP2
+    ?`Today is ${new Date().toDateString()}. Search for latest US PPI, import/export prices, employment cost index, and supply-chain pressures. Reserve management implications for USD bonds and gold.`
+    :`Today is ${new Date().toDateString()}. Search for latest US CPI, breakeven inflation rates, TIPS real yields, Fed policy signals. Reserve management implications for USD bonds and gold.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        system, messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    clearInterval(mi);overlay.classList.remove('show');btn.disabled=false;btn.classList.remove('loading');
+    panel.classList.add('show');
+    content.innerHTML=`<em style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:#8a9bac">Updated: ${new Date().toUTCString()}</em><br><br>${text||'<em>No new data changes vs displayed.</em>'}`;
+    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(err){
+    clearInterval(mi);overlay.classList.remove('show');btn.disabled=false;btn.classList.remove('loading');
+    panel.classList.add('show');
+    content.innerHTML=`<strong style="color:var(--red)">Error:</strong> ${err.message}`;
+  }
+}
+</script>
+</body>
+</html>
